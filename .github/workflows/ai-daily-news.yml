@@ -1,0 +1,60 @@
+name: AI Daily News Digest
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # GitHub Actions schedules are in UTC. To approximate 8am PT across DST,
+    # run at both 15:00 and 16:00 UTC and guard execution by checking PT hour.
+    - cron: '0 15 * * *'
+    - cron: '0 16 * * *'
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Guard to run only at 8am PT when on schedule
+        if: github.event_name == 'schedule'
+        run: |
+          export TZ=America/Los_Angeles
+          NOW=$(date)
+          HOUR=$(date +%H)
+          echo "Current PT time: $NOW (hour=$HOUR)"
+          if [ "$HOUR" != "08" ]; then
+            echo "Not 8am PT, exiting without running."
+            exit 0
+          fi
+
+      - name: Run AI Daily News Digest
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          NEWS_SOURCES: ${{ secrets.NEWS_SOURCES }}
+          KEYWORDS: ${{ secrets.KEYWORDS }}
+          MAX_ARTICLES: ${{ secrets.MAX_ARTICLES || 8 }}
+          MIN_SCORE: ${{ secrets.MIN_SCORE || 0.6 }}
+          TIME_WINDOW_HOURS: 24
+          LOG_LEVEL: INFO
+        run: |
+          python ai_news_digest.py
