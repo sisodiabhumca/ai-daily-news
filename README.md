@@ -1,5 +1,9 @@
 # AI Daily News -> Slack Digest
 
+*Last updated: October 3, 2025*
+
+> **Note**: The GitHub Actions workflow is scheduled to run daily at 8 AM PT (15:00/16:00 UTC)
+
 A small Python script that fetches targeted, motivational AI news and learning resources from curated feeds and posts a short digest to Slack via your existing bot or webhook.
 
 ## Features
