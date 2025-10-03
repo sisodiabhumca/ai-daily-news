@@ -1,12 +1,14 @@
 name: AI Daily News Digest
 
 on:
+  # Manual trigger
   workflow_dispatch: {}
+  
+  # Scheduled runs (GitHub Actions uses UTC)
   schedule:
-    # GitHub Actions schedules are in UTC. To approximate 8am PT across DST,
-    # run at both 15:00 and 16:00 UTC and guard execution by checking PT hour.
-    - cron: '0 15 * * *'
-    - cron: '0 16 * * *'
+    # Next scheduled run: 2025-10-04 15:00 UTC (8:00 AM PT)
+    - cron: '0 15 * * *'  # 8:00 AM PT (15:00 UTC) during PDT
+    - cron: '0 16 * * *'  # 8:00 AM PT (16:00 UTC) during PST
 
 jobs:
   digest:
