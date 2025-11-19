@@ -8,8 +8,6 @@ on:
   schedule:
     # Next scheduled run: 2025-10-04 15:00 UTC (8:00 AM PT)
     - cron: '0 15 * * *'  # 8:00 AM PT (15:00 UTC) during PDT
-    - cron: '0 16 * * *'  # 8:00 AM PT (16:00 UTC) during PST
-
 jobs:
   digest:
     runs-on: ubuntu-latest
