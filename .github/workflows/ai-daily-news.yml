@@ -1,13 +1,13 @@
 name: AI Daily News Digest
 
 on:
-  # Manual trigger
   workflow_dispatch: {}
-  
-  # Scheduled runs (GitHub Actions uses UTC)
   schedule:
-    # Next scheduled run: 2025-10-04 15:00 UTC (8:00 AM PT)
-    - cron: '0 15 * * *'  # 8:00 AM PT (15:00 UTC) during PDT
+    # Runs at 15:00 UTC (08:00 PT during PDT — UTC-7)
+    - cron: '0 15 * * *'
+    # Runs at 16:00 UTC (08:00 PT during PST — UTC-8)
+    - cron: '0 16 * * *'
+
 jobs:
   digest:
     runs-on: ubuntu-latest
@@ -52,9 +52,13 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           NEWS_SOURCES: ${{ secrets.NEWS_SOURCES }}
           KEYWORDS: ${{ secrets.KEYWORDS }}
-          MAX_ARTICLES: ${{ secrets.MAX_ARTICLES || 8 }}
-          MIN_SCORE: ${{ secrets.MIN_SCORE || 0.6 }}
+          MAX_ARTICLES: ${{ secrets.MAX_ARTICLES }}
+          MIN_SCORE: ${{ secrets.MIN_SCORE }}
           TIME_WINDOW_HOURS: 24
           LOG_LEVEL: INFO
         run: |
+          # default environment values if secrets are not set
+          MAX_ARTICLES="${MAX_ARTICLES:-8}"
+          MIN_SCORE="${MIN_SCORE:-0.6}"
+          echo "MAX_ARTICLES=$MAX_ARTICLES MIN_SCORE=$MIN_SCORE TIME_WINDOW_HOURS=$TIME_WINDOW_HOURS"
           python ai_news_digest.py
