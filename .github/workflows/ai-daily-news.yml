@@ -34,18 +34,32 @@ jobs:
           pip install -r requirements.txt
 
       - name: Guard to run only at 8am PT when on schedule
+        id: guard
         if: github.event_name == 'schedule'
         run: |
-          export TZ=America/Los_Angeles
-          NOW=$(date)
-          HOUR=$(date +%H)
-          echo "Current PT time: $NOW (hour=$HOUR)"
-          if [ "$HOUR" != "08" ]; then
-            echo "Not 8am PT, exiting without running."
-            exit 0
+          # compute Pacific Time hour and offset
+          PT_HOUR=$(TZ=America/Los_Angeles date +%H)
+          OFFSET=$(TZ=America/Los_Angeles date +%z)
+          UTC_HOUR=$(date -u +%H)
+          echo "PT_HOUR=$PT_HOUR OFFSET=$OFFSET UTC_HOUR=$UTC_HOUR"
+
+          # expected UTC hour for 08:00 PT depends on offset:
+          # -0700 => 15 UTC, -0800 => 16 UTC
+          if [ "$OFFSET" = "-0700" ]; then
+            EXPECTED_UTC="15"
+          else
+            EXPECTED_UTC="16"
+          fi
+          echo "EXPECTED_UTC=$EXPECTED_UTC"
+
+          if [ "$PT_HOUR" = "08" ] && [ "$UTC_HOUR" = "$EXPECTED_UTC" ]; then
+            echo "run_digest=true" >> $GITHUB_OUTPUT
+          else
+            echo "run_digest=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Run AI Daily News Digest
+        if: github.event_name != 'schedule' || (github.event_name == 'schedule' && steps.guard.outputs.run_digest == 'true')
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
